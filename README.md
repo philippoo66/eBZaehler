@@ -1,2 +1,2 @@
 # eBZaehler
-listen to eBZ DD3 (port on top) and publish MQTT 
+listen to eBZ DD3 OD electricity meter (port on top) and publish MQTT 
