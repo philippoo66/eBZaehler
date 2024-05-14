@@ -53,7 +53,9 @@ def get_value(dp:str, data:str):
     if start_index != -1:
         start_index += len(fstr)
         # Finde den Index des Endes des Werts
-        end_index = data.find("*", start_index)
+        end_index1 = data.find("*", start_index)  # ACHTUNG: bei Einheiten-losen Werten ")"
+        end_index2 = data.find(")", start_index)
+        end_index = min(end_index1, end_index2)
         if end_index != -1:
             value = data[start_index:end_index]
             #print("Wert zu " + dp, value)
@@ -107,6 +109,7 @@ def main():
 
         data_buffer = b''
         last_receive_time = time.time()
+        cycle = 0
 
         while True:
             # Zeichen vom Serial Port lesen
@@ -133,20 +136,23 @@ def main():
 
                 print(log_str)
 
-                if(settings_ini.mqtt is not None):
-                    mod_mqtt.add2queue("Sum", float(p_sum))
-                    mod_mqtt.add2queue("L1", float(p_L1))
-                    mod_mqtt.add2queue("L2", float(p_L2))
-                    mod_mqtt.add2queue("L3", float(p_L3))
+                cycle += 1
+                if(cycle >= settings_ini.cycle):
+                    if(settings_ini.mqtt is not None):
+                        mod_mqtt.add2queue("Sum", float(p_sum))
+                        mod_mqtt.add2queue("L1", float(p_L1))
+                        mod_mqtt.add2queue("L2", float(p_L2))
+                        mod_mqtt.add2queue("L3", float(p_L3))
 
-                if(settings_ini.write_csv):
-                    currhour = now.hour
-                    newday = (currhour < lasthour)
-                    lasthour = currhour
+                    if(settings_ini.write_csv):
+                        currhour = now.hour
+                        newday = (currhour < lasthour)
+                        lasthour = currhour
 
-                    if(newday or (len(logbuffer) >= settings_ini.buffer_to_write)):  # 30 min
-                        write_log()
-                    logbuffer.append(log_str)
+                        if(newday or (len(logbuffer) >= settings_ini.buffer_to_write)):  # 30 min
+                            write_log()
+                        logbuffer.append(log_str)
+                    cycle = 0
 
             time.sleep(0.01)
 
