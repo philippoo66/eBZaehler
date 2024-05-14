@@ -2,3 +2,5 @@
 - you may get a maleware warning on the exe but there is none definitely
 
 ![grafik](https://github.com/philippoo66/eBZaehler/assets/122479122/265a129d-9783-4801-879d-be1c44b21cc6)
+
+![grafik](https://github.com/philippoo66/eBZaehler/assets/122479122/d2048bf3-7c24-4319-8c9b-bf5f8adfe22d)
