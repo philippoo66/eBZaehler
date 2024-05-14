@@ -1,4 +1,4 @@
-
+# IR head +++++++++++++++++++
 serial_port = "/dev/ttyUSB0"
 
 # MQTT +++++++++++++++++++
@@ -11,6 +11,6 @@ write_csv = True
 buffer_to_write = 1800           # preserve SD card ;-)
 csv_path = "/home/pi/Public/"
 
-# ...
+# too much ketchup +++++++++++++++++++
 cycle = 1                        # messages/seconds to publish/log
 
