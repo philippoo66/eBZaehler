@@ -3,7 +3,8 @@ listen to eBZ DD3 OD electricity meter (port on top) and publish MQTT
 
 The port on top delivers extensive info like this every single second:
 
-`EBZ5DD32R06DTA_107
+```
+EBZ5DD32R06DTA_107
 
 1-0:0.0.0*255(1EBZ0123456789)
 1-0:96.1.0*255(1EBZ0123456789)
@@ -21,7 +22,7 @@ The port on top delivers extensive info like this every single second:
 1-0:96.5.0*255(001C0104)
 0-0:96.8.0*255(00119767)
 !
-`
+```
 
 - find data point info in the [manual](https://github.com/philippoo66/eBZaehler/blob/main/manual/BA_eBZ_DD3_Rev02_2017-05-04.pdf)
 - comfortably view, zoom and scroll the generated csv with the [CsvViewer](https://github.com/philippoo66/eBZaehler/tree/main/CsvViewer)
