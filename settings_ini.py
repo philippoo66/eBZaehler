@@ -7,6 +7,7 @@ mqtt_user = None                 # "<user>:<pwd>"
 mqtt_topic = "eBZaehler"         # "eBZaehler"
 
 # csv settings +++++++++++++++++++
+write_counters = True
 write_csv = True
 buffer_to_write = 1800           # preserve SD card ;-)
 csv_path = "/home/pi/Public/"

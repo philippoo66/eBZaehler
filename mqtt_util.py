@@ -84,6 +84,10 @@ def publish_read(name, value):
         if(verbose): print(ret)
 
 def add2queue(name, value):
+    try:
+        value = float(value)
+    except:
+        pass
     tup = (name, value)
     publ_queue.append(tup)
 
