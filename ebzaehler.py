@@ -157,11 +157,12 @@ def main():
                         mod_mqtt.add2queue("L3", p_L3)
                     
                     if(settings_ini.write_counters):
-                        if((currhour in [0,6,12,18]) and not counters_written):
-                            cnt180 = get_value("1.8.0", data_str)
-                            cnt280 = get_value("2.8.0", data_str)
-                            write_counters(currhour, cnt180, cnt280)
-                            counters_written = True
+                        if(currhour in [0,6,12,18]): 
+                            if(not counters_written):
+                                cnt180 = get_value("1.8.0", data_str)
+                                cnt280 = get_value("2.8.0", data_str)
+                                write_counters(currhour, cnt180, cnt280)
+                                counters_written = True
                         else:
                             counters_written = False
 
