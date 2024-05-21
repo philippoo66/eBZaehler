@@ -35,12 +35,13 @@ def write_log():
         for itm in logbuffer:
             file.write(itm + '\n')
         file.flush()  # Datei sofort aktualisieren
+    logbuffer = []
     recent_datestr = get_datestr()
 
 def write_counters(hr, cnt180, cnt280):
     global recent_datestr
-    with open(os.path.join(settings_ini.csv_path, "counters.csv"), 'a') as file:
-        file.write(f"{recent_datestr}:{hr};{cnt180};{cnt280}\n")
+    with open(os.path.join(settings_ini.csv_path, "eBZcounters.csv"), 'a') as file:
+        file.write(f"{recent_datestr}:{hr:02d};{cnt180};{cnt280}\n")
         file.flush()  # Datei sofort aktualisieren
 
 
@@ -144,12 +145,13 @@ def main():
                 except Exception as e:
                     log_str = e
 
-                currhour = now.hour
-                newday = (currhour < lasthour)
-                lasthour = currhour
-
                 cycle += 1
                 if(cycle >= settings_ini.cycle):
+                    cycle = 0
+                    currhour = now.hour
+                    newday = (currhour < lasthour)
+                    lasthour = currhour
+
                     if(settings_ini.mqtt is not None):
                         mod_mqtt.add2queue("Sum", p_sum)
                         mod_mqtt.add2queue("L1", p_L1)
@@ -159,10 +161,10 @@ def main():
                     if(settings_ini.write_counters):
                         if(currhour in [0,6,12,18]): 
                             if(not counters_written):
+                                counters_written = True
                                 cnt180 = get_value("1.8.0", data_str)
                                 cnt280 = get_value("2.8.0", data_str)
                                 write_counters(currhour, cnt180, cnt280)
-                                counters_written = True
                         else:
                             counters_written = False
 
@@ -170,7 +172,6 @@ def main():
                         if(newday or (len(logbuffer) >= settings_ini.buffer_to_write)):  # 30 min
                             write_log()
                         logbuffer.append(log_str)
-                    cycle = 0
 
             time.sleep(0.01)
 
