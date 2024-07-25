@@ -148,9 +148,6 @@ def main():
                 cycle += 1
                 if(cycle >= settings_ini.cycle):
                     cycle = 0
-                    currhour = now.hour
-                    newday = (currhour < lasthour)
-                    lasthour = currhour
 
                     if(settings_ini.mqtt is not None):
                         mod_mqtt.add2queue("Sum", p_sum)
@@ -158,8 +155,19 @@ def main():
                         mod_mqtt.add2queue("L2", p_L2)
                         mod_mqtt.add2queue("L3", p_L3)
                     
+                    currhour = now.hour
+                    newday = (currhour < lasthour)
+                    lasthour = currhour
+
+                    if(settings_ini.write_csv):
+                        if(newday or (len(logbuffer) >= settings_ini.buffer_to_write)):  # 30 min
+                            write_log()
+                        logbuffer.append(log_str)
+                    elif(newday):
+                        recent_datestr = get_datestr()  # for write_counters()
+
                     if(settings_ini.write_counters):
-                        if(currhour in [0,6,12,18]): 
+                        if(currhour in settings_ini.write_counters_hours): 
                             if(not counters_written):
                                 counters_written = True
                                 cnt180 = get_value("1.8.0", data_str)
@@ -167,11 +175,6 @@ def main():
                                 write_counters(currhour, cnt180, cnt280)
                         else:
                             counters_written = False
-
-                    if(settings_ini.write_csv):
-                        if(newday or (len(logbuffer) >= settings_ini.buffer_to_write)):  # 30 min
-                            write_log()
-                        logbuffer.append(log_str)
 
             time.sleep(0.01)
 
