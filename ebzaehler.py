@@ -25,23 +25,29 @@ import threading
 import settings_ini
 
 logbuffer = []
-recent_file = ""
+recent_datestr = ""
 
 
 def write_log():
     global logbuffer
-    global recent_file
-    with open(os.path.join(settings_ini.csv_path, recent_file), 'a') as file:
+    global recent_datestr
+    with open(os.path.join(settings_ini.csv_path, recent_datestr + ".csv"), 'a') as file:
         for itm in logbuffer:
             file.write(itm + '\n')
         file.flush()  # Datei sofort aktualisieren
     logbuffer = []
-    recent_file = get_filename()
+    recent_datestr = get_datestr()
+
+def write_counters(hr, cnt180, cnt280):
+    global recent_datestr
+    with open(os.path.join(settings_ini.csv_path, "eBZcounters.csv"), 'a') as file:
+        file.write(f"{recent_datestr}:{hr:02d};{cnt180};{cnt280}\n")
+        file.flush()  # Datei sofort aktualisieren
 
 
-def get_filename():
+def get_datestr():
     now = datetime.datetime.now()
-    return f"{now.year:04d}_{now.month:02d}_{now.day:02d}.csv"
+    return f"{now.year:04d}_{now.month:02d}_{now.day:02d}"
 
 
 def get_value(dp:str, data:str):
@@ -71,15 +77,16 @@ def get_value(dp:str, data:str):
 # Hauptfunktion
 def main():
     global logbuffer
-    global recent_file
+    global recent_datestr
 
     mod_mqtt = None
     ser = None
     eot_time = 0.1  # sec
 
     # init some things
-    recent_file = get_filename()
+    recent_datestr = get_datestr()
     lasthour = datetime.datetime.now().hour
+    counters_written = False
 
     try:
         if(len(sys.argv) > 1):
@@ -123,36 +130,51 @@ def main():
             elif ((time.time() - last_receive_time) > eot_time) and data_buffer:
                 # Wenn 0,x Sekunde vergangen ist und der Datenpuffer nicht leer ist,
                 # Bytes in String umwandeln
-                data_str = data_buffer.decode("utf-8")
-                data_buffer = b''
-                #data_str = data_str.replace('\r\n', ';')
-                p_sum = get_value("16.7.0", data_str)
-                p_L1 = get_value("36.7.0", data_str)
-                p_L2 = get_value("56.7.0", data_str)
-                p_L3 = get_value("76.7.0", data_str)
-                now = datetime.datetime.now()
-                dt = "{0:02d}:{1:02d}:{2:02d}".format(now.hour, now.minute, now.second)
-                log_str = f"{dt};{p_L1};{p_L2};{p_L3};{p_sum}"
-
-                print(log_str)
+                try:
+                    data_str = data_buffer.decode("utf-8")
+                    data_buffer = b''
+                    #data_str = data_str.replace('\r\n', ';')
+                    p_sum = get_value("16.7.0", data_str)
+                    p_L1 = get_value("36.7.0", data_str)
+                    p_L2 = get_value("56.7.0", data_str)
+                    p_L3 = get_value("76.7.0", data_str)
+                    now = datetime.datetime.now()
+                    dt = "{0:02d}:{1:02d}:{2:02d}".format(now.hour, now.minute, now.second)
+                    log_str = f"{dt};{p_L1};{p_L2};{p_L3};{p_sum}"
+                    print(log_str)
+                except Exception as e:
+                    log_str = e
 
                 cycle += 1
                 if(cycle >= settings_ini.cycle):
+                    cycle = 0
+
                     if(settings_ini.mqtt is not None):
-                        mod_mqtt.add2queue("Sum", float(p_sum))
-                        mod_mqtt.add2queue("L1", float(p_L1))
-                        mod_mqtt.add2queue("L2", float(p_L2))
-                        mod_mqtt.add2queue("L3", float(p_L3))
+                        mod_mqtt.add2queue("Sum", p_sum)
+                        mod_mqtt.add2queue("L1", p_L1)
+                        mod_mqtt.add2queue("L2", p_L2)
+                        mod_mqtt.add2queue("L3", p_L3)
+                    
+                    currhour = now.hour
+                    newday = (currhour < lasthour)
+                    lasthour = currhour
 
                     if(settings_ini.write_csv):
-                        currhour = now.hour
-                        newday = (currhour < lasthour)
-                        lasthour = currhour
-
                         if(newday or (len(logbuffer) >= settings_ini.buffer_to_write)):  # 30 min
                             write_log()
                         logbuffer.append(log_str)
-                    cycle = 0
+                    elif(newday):
+                        recent_datestr = get_datestr()  # for write_counters()
+
+                    if(settings_ini.write_counters):
+                        if(currhour in settings_ini.write_counters_hours): 
+                            if(not counters_written):
+                                counters_written = True
+                                cnt180 = get_value("1.8.0", data_str)
+                                cnt280 = get_value("2.8.0", data_str)
+                                write_counters(currhour, cnt180, cnt280)
+                        else:
+                            counters_written = False
 
             time.sleep(0.01)
 
