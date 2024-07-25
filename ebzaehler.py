@@ -54,8 +54,8 @@ def get_value(dp:str, data:str):
     value = None 
     #start_index = data.find("1-0:16.7.0*255(")
     fstr = dp + "*255("
-    # Finde den Index des Anfangs des Werts
-    start_index = data.find(fstr)
+    # Finde den (letzten) Index des Anfangs des Werts
+    start_index = data.rfind(fstr)
     if start_index != -1:
         start_index += len(fstr)
         # Finde den Index des Endes des Werts
@@ -115,8 +115,8 @@ def main():
 
 
         data_buffer = b''
-        last_receive_time = time.time()
         cycle = 0
+        eot_received = False
 
         while True:
             # Zeichen vom Serial Port lesen
@@ -125,14 +125,23 @@ def main():
             if incoming_data:
                 # Daten zum Datenpuffer hinzufügen
                 data_buffer += incoming_data
-                last_receive_time = time.time()
+                # buffer kurz halten, falls vorher Trash empfangen wurde
+                data_buffer = data_buffer[-1024:]
+
+                # Prüfen, ob eof "!" in data_buffer enthalten ist
+                eot_index = data_buffer.find(b"!")
+                if eot_index != -1:
+                    # Alles nach dem Marker "!" entfernen
+                    data_buffer = data_buffer[:eot_index]
+                    eot_received = True
                 #print(data_buffer) #.hex())
-            elif ((time.time() - last_receive_time) > eot_time) and data_buffer:
-                # Wenn 0,x Sekunde vergangen ist und der Datenpuffer nicht leer ist,
+
+            if eot_received:
                 # Bytes in String umwandeln
                 try:
                     data_str = data_buffer.decode("utf-8")
                     data_buffer = b''
+                    eot_received = False
                     #data_str = data_str.replace('\r\n', ';')
                     p_sum = get_value("16.7.0", data_str)
                     p_L1 = get_value("36.7.0", data_str)
